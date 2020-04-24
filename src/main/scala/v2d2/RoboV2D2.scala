@@ -31,8 +31,13 @@ import akka.http.scaladsl.server.Route
 import v2d2.protocols._
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
+import akka.util.Timeout
+import scala.concurrent.duration._
 
-object V2D2 extends App with SlashCommandProtocol {
+object V2D2 
+  extends App 
+  with SlashCommandProtocol {
+
   val creds   = ConfigFactory.load("creds.conf")
   val uris    = ConfigFactory.load("v2d2.conf")
   val ptoken  = creds.getString("creds.slack.ptoken")
@@ -41,6 +46,7 @@ object V2D2 extends App with SlashCommandProtocol {
   val loveurl = uris.getString("v2d2.love.url")
 
   implicit val system       = ActorSystem("slack")
+  implicit val timeout      = Timeout(15.seconds)
   implicit val ec           = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
@@ -51,67 +57,109 @@ object V2D2 extends App with SlashCommandProtocol {
   val selfId = client.state.self.id
 
   val users = client.apiClient.client.listUsers()
+  users.map { ls =>
+    pprint.log(ls.size)
+  }
 
   val apiclient = SlackApiClient(ptoken)
+
+  // relay don't delete
   client.onMessage { message =>
     muxactor ! Relay(message)
   }
 
-  //TODO: make this more generic?
+  def relaySlash(fields: Map[String,String]) = {
+    val ocmd = SlashCommand(fields)
+    ocmd.map { cmd =>
+     muxactor ! SlashRelay(
+        Message(
+          ts = "1234",
+          channel = cmd.channel_id,
+          user = cmd.user_id,
+          text = cmd.strippedText,
+          is_starred = None,
+          thread_ts = None
+        )
+      )
+    }
+    complete(StatusCodes.NoContent)
+  }
+
   lazy val routes: Route =
     concat(
-      pathPrefix("guess") {
-        concat(
-          pathEnd {
-            concat(
-              post {
-                formFieldMap { fields =>
-                  val ocmd = SlashCommand(fields)
-                  ocmd.map { cmd =>
-                    muxactor ! SlashRelay(
-                      Message(
-                        ts = "1234",
-                        channel = cmd.channel_id,
-                        user = cmd.user_id,
-                        text = cmd.strippedText,
-                        is_starred = None,
-                        thread_ts = None
-                      )
-                    )
-                  }
-                  complete(StatusCodes.NoContent)
-                }
+      pathPrefix("v1")  {
+        concat (
+          get {
+            path("ping") {
+              complete(StatusCodes.OK)
+            }
+          },
+          post {
+            concat (
+              path("love") {
+                formFieldMap(relaySlash)
+              },
+              path("who") {
+                formFieldMap(relaySlash)
               }
             )
           }
         )
-      },
-      pathPrefix("who") {
-        concat(
-          pathEnd {
-            concat(
-              post {
-                formFieldMap { fields =>
-                  val ocmd = SlashCommand(fields)
-                  ocmd.map { cmd =>
-                   muxactor ! SlashRelay(
-                      Message(
-                        ts = "1234",
-                        channel = cmd.channel_id,
-                        user = cmd.user_id,
-                        text = cmd.strippedText,
-                        is_starred = None,
-                        thread_ts = None
-                      )
-                    )
-                  }
-                  complete(StatusCodes.NoContent)
-                }
-              }
-            )
-          }
-        )
-      },
+      }
+    )
+
+      // pathPrefix("guess") {
+      //   concat(
+      //     pathEnd {
+      //       concat(
+      //         post {
+      //           formFieldMap { fields =>
+      //             val ocmd = SlashCommand(fields)
+      //             ocmd.map { cmd =>
+      //               muxactor ! SlashRelay(
+      //                 Message(
+      //                   ts = "1234",
+      //                   channel = cmd.channel_id,
+      //                   user = cmd.user_id,
+      //                   text = cmd.strippedText,
+      //                   is_starred = None,
+      //                   thread_ts = None
+      //                 )
+      //               )
+      //             }
+      //             complete(StatusCodes.NoContent)
+      //           }
+      //         }
+      //       )
+      //     }
+      //   )
+      // },
+      // pathPrefix("who") {
+      //   concat(
+      //     pathEnd {
+      //       concat(
+      //         post {
+      //           formFieldMap { fields =>
+      //             val ocmd = SlashCommand(fields)
+      //             ocmd.map { cmd =>
+      //              muxactor ! SlashRelay(
+      //                 Message(
+      //                   ts = "1234",
+      //                   channel = cmd.channel_id,
+      //                   user = cmd.user_id,
+      //                   text = cmd.strippedText,
+      //                   is_starred = None,
+      //                   thread_ts = None
+      //                 )
+      //               )
+      //             }
+      //             complete(StatusCodes.NoContent)
+      //           }
+      //         }
+      //       )
+      //     }
+      //   )
+      // },
       // pathPrefix("crush") {
       //   concat(
       //     pathEnd {
@@ -138,34 +186,28 @@ object V2D2 extends App with SlashCommandProtocol {
       //     }
       //   )
       // },
-      pathPrefix("love") {
-        concat(
-          pathEnd {
-            concat(
-              post {
-                formFieldMap { fields =>
-                  val ocmd = SlashCommand(fields)
-                  ocmd.map { cmd =>
-                    muxactor ! SlashRelay(
-                      Message(
-                        ts = "1234",
-                        channel = cmd.channel_id,
-                        user = cmd.user_id,
-                        text = cmd.strippedText,
-                        is_starred = None,
-                        thread_ts = None
-                      )
-                    )
-                  }
-                  complete(StatusCodes.NoContent)
-                }
-              }
-            )
-          }
-        )
-      }
-    )
-
+      // pathPrefix("love") {
+      //   concat(
+      //     pathEnd {
+      //       concat(
+      //         post {
+      //           formFieldMap { fields =>
+      //             val ocmd = SlashCommand(fields)
+      //             ocmd.map { cmd =>
+      //               muxactor ! SlashRelay(
+      //                 Message(
+      //                   ts = "1234",
+      //                   channel = cmd.channel_id,
+      //                   user = cmd.user_id,
+      //                   text = cmd.strippedText,
+      //                   is_starred = None,
+      //                   thread_ts = None
+      //                 )
+      //               )
+      //             }
+      //             complete(StatusCodes.NoContent)
+      //           }
+      
   client.onEvent {
     case reply: Reply =>
       emoactor ! reply
@@ -177,5 +219,6 @@ object V2D2 extends App with SlashCommandProtocol {
       None
 
   }
-  val bindingFuture = Http().bindAndHandle(routes, "localhost", 8082)
+  val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", 8082)
+
 }

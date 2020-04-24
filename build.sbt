@@ -63,6 +63,7 @@ dockerfile in docker := {
   new Dockerfile {
     // Base image
     from("openjdk:8-jre-alpine")
+    expose(8082)
     // Add all files on the classpath
     add(classpath.files, "/app/")
     // Add the JAR file
@@ -71,6 +72,12 @@ dockerfile in docker := {
     entryPoint("java", "-cp", classpathString, mainclass)
   }
 }
+// Set names for the image
+imageNames in docker := Seq(
+  ImageName(namespace = Some("docker.werally.in"),
+    repository = "bots/v2d2",
+    tag = Some(version.value))
+)
 
 // Uncomment the following for publishing to Sonatype.
 // See https://www.scala-sbt.org/1.x/docs/Using-Sonatype.html for more detail.
