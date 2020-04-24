@@ -36,7 +36,6 @@ object CardNameSearch extends BotCombinators {
   def apply(
     msg: Message
   ): Option[CardNameSearch] = {
-    println(s"msg content: ${msg.text}")
     apply(msg.text, msg)
   }
 

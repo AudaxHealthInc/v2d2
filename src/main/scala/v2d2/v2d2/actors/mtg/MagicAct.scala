@@ -115,10 +115,10 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
           val tlen    = cs.target.length
           val pcent   = (tlen - score).toFloat / tlen
 
-          println("++++++++++++++++++++++++++++")
-          println(s"pc: ${pcent} score: ${score} len: ${tlen}")
-          println(s"len: ${cs.target.length} target: ${cs.target}")
-          println("++++++++++++++++++++++++++++")
+          // println("++++++++++++++++++++++++++++")
+          // println(s"pc: ${pcent} score: ${score} len: ${tlen}")
+          // println(s"len: ${cs.target.length} target: ${cs.target}")
+          // println("++++++++++++++++++++++++++++")
 
           val jw    = new JaroWinklerDistance()
           val jcent = jw(target, results.head.name.toLowerCase)

@@ -177,5 +177,5 @@ object V2D2 extends App with SlashCommandProtocol {
       None
 
   }
-  val bindingFuture = Http().bindAndHandle(routes, "localhost", 8081)
+  val bindingFuture = Http().bindAndHandle(routes, "localhost", 8082)
 }
