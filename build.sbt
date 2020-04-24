@@ -12,8 +12,8 @@ resolvers += "scalaz-bintray".at("https://dl.bintray.com/scalaz/releases")
 resolvers +=
   "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/releases")
 
-val akkaV      = "2.5.21"
-val akkaHttpV  = "10.1.7"
+val akkaV      = "2.5.31"
+val akkaHttpV  = "10.1.11"
 val scalaTestV = "3.0.5"
 val macWireV   = "2.3.3"
 
@@ -24,7 +24,7 @@ lazy val v2d2 = (project in file("."))
     name := "v2d2",
     // libraryDependencies += scalaTest % Test
     libraryDependencies ++= Seq(
-      "com.github.slack-scala-client" %% "slack-scala-client"   % "0.2.6",
+      "com.github.slack-scala-client" %% "slack-scala-client"   % "0.2.9",
       "joda-time"                     % "joda-time"             % "2.10.4",
       "org.mockito"                   % "mockito-core"          % "2.16.0" % "test",
       "com.softwaremill.macwire"      %% "macros"               % macWireV % "provided",
@@ -43,7 +43,7 @@ lazy val v2d2 = (project in file("."))
       "org.apache.commons"            % "commons-lang3"         % "3.6",
       "com.lihaoyi"                   %% "fastparse"            % "2.1.3",
       "org.apache.commons"            % "commons-text"          % "1.1",
-      "com.typesafe.play"             %% "play-json"            % "2.7.1",
+      "com.typesafe.play"             %% "play-json"            % "2.7.4",
       "org.joda"                      % "joda-convert"          % "1.8.1" // https://stackoverflow.com/a/13856382/118587
     )
   )

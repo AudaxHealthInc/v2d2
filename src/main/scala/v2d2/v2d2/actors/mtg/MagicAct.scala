@@ -22,7 +22,6 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
   implicit val ec = ExecutionContext.global
   // import system.dispatcher
   implicit val system       = ActorSystem()
-  implicit val materializer = ActorMaterializer()
   implicit val timeout      = Timeout(25.seconds)
 
   val stream: InputStream = getClass.getResourceAsStream("/allsets.json")
@@ -52,34 +51,43 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
       .sorted
   }
 
+  case class Score(
+    min: Int,
+    minCount: Int,
+    raw: List[Int]
+  )
+
   def lookupName(
     search: String,
     cards: List[ICard]
   ): List[ICard] = {
     cards.filter(c => c.name.equalsIgnoreCase(search)) match {
       case Nil =>
-        val minList = cards
-          .groupBy(
-            c => scores(c.name, search).min
-          )
+        val minScores = cards
+          .filterNot(_.image_uris == None)
+          .map { c =>
+            val raw = scores(c.name, search)
+            val m   = raw.min
+            val ct  = raw.count(_ == m)
+            (Score(m, ct, raw), c)
+          }
+          .groupBy { i =>
+            Score(i._1.min, i._1.minCount, List())
+          }
           .toList
-          .sortBy(_._1)
+          .sortWith {
+            case (t1, t2) =>
+              val score1 = t1._1
+              val score2 = t2._1
+              if (score1.min == score2.min) {
+                score1.minCount > score2.minCount
+              } else {
+                score1.min < score2.min
+              }
+          }
           .head
-          ._2
-        val endList = minList
-          .groupBy(
-            c =>
-              scores(c.name, search)
-                .groupBy(identity)
-                .mapValues(_.size)
-                .toList
-                .sortBy(_._1)
-                .head
-          )
-          .toList
-          .sortBy(_._1)
-        val tList = endList.last._2.groupBy(c => c.name).map(t => t._2.head)
-        endList.last._2.groupBy(c => c.name).map(t => t._2.head).toList
+        // make the list unique by name
+        minScores._2.map(_._2).groupBy { c => c.name }.map { t => t._2.head }.toList
       case c =>
         Tuple2(0, c)._2.groupBy(c => c.name).map(t => t._2.head).toList
     }
@@ -107,10 +115,10 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
           val tlen    = cs.target.length
           val pcent   = (tlen - score).toFloat / tlen
 
-          // println("++++++++++++++++++++++++++++")
-          // println(s"pc: ${pcent} score: ${score} len: ${tlen}")
-          // println(s"len: ${cs.target.length} target: ${cs.target}")
-          // println("++++++++++++++++++++++++++++")
+          println("++++++++++++++++++++++++++++")
+          println(s"pc: ${pcent} score: ${score} len: ${tlen}")
+          println(s"len: ${cs.target.length} target: ${cs.target}")
+          println("++++++++++++++++++++++++++++")
 
           val jw    = new JaroWinklerDistance()
           val jcent = jw(target, results.head.name.toLowerCase)
@@ -121,7 +129,7 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
                      ((tlen == 5 || tlen == 6) && score > 2) || pcent < 0.7) {
             context.parent ! Response(
               cs.msg,
-              f""":shrug: your best match was 
+              f""":shrug: your best match was
                  |${results.head.name} with ${pcent * 100}%1.2f$p
                  |and score ${jcent * 100}%1.2f$p""".stripMargin.replaceAll("\n", " ")
             )
@@ -130,7 +138,6 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
             val imgs = results.collect {
               case c if (c.image_uris != None) =>
                 val u = c.image_uris.get.png.replaceAll("\\?.*$", "")
-                // pprint.pprintln(s"uri: ${u}")
                 (u -> c)
             }
 
