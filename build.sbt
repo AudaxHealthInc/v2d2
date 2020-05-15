@@ -1,7 +1,7 @@
 import Dependencies._
 
 ThisBuild / scalaVersion := "2.12.8"
-ThisBuild / version := "1.0.13"
+ThisBuild / version := "1.0.16"
 ThisBuild / organization := "org.v2d2"
 ThisBuild / organizationName := "v2d2"
 traceLevel := 0
@@ -13,8 +13,10 @@ resolvers += "scalaz-bintray".at("https://dl.bintray.com/scalaz/releases")
 resolvers +=
   "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/releases")
 
-val akkaV      = "2.5.31"
-val akkaHttpV  = "10.1.11"
+// val akkaV      = "2.5.31"
+// val akkaHttpV  = "10.1.11"
+val akkaV      = "2.6.5"
+val akkaHttpV  = "10.1.12"
 val scalaTestV = "3.0.5"
 val macWireV   = "2.3.3"
 
@@ -33,7 +35,7 @@ lazy val v2d2 = (project in file("."))
       "com.softwaremill.macwire"      %% "util"                 % macWireV,
       "com.softwaremill.macwire"      %% "proxy"                % macWireV,
       "com.typesafe.akka"             %% "akka-actor"           % akkaV,
-      "com.typesafe.akka"             %% "akka-contrib"         % akkaV,
+      // "com.typesafe.akka"             %% "akka-contrib"         % akkaV,
       "com.typesafe.akka"             %% "akka-stream"          % akkaV,
       "com.typesafe.akka"             %% "akka-testkit"         % akkaV,
       "com.typesafe.akka"             %% "akka-http"            % akkaHttpV,
@@ -62,7 +64,7 @@ dockerfile in docker := {
     .mkString(":") + ":" + jarTarget
   new Dockerfile {
     // Base image
-    from("openjdk:8-jre-alpine")
+    from("openjdk:8-jre-slim")
     expose(8082)
     // Add all files on the classpath
     add(classpath.files, "/app/")

@@ -34,9 +34,7 @@ import akka.http.scaladsl.unmarshalling.FromRequestUnmarshaller
 import akka.util.Timeout
 import scala.concurrent.duration._
 
-object V2D2 
-  extends App 
-  with SlashCommandProtocol {
+object V2D2 extends App with SlashCommandProtocol {
 
   val creds   = ConfigFactory.load("creds.conf")
   val uris    = ConfigFactory.load("v2d2.conf")
@@ -50,9 +48,10 @@ object V2D2
   implicit val ec           = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
-  val client   = SlackRtmClient(btoken)
-  val muxactor = system.actorOf(Props(new MuxActor(client)), name = "mux")
-  val emoactor = system.actorOf(Props(new EmoActor(client)), name = "emo")
+  val apiclient = SlackApiClient(ptoken)
+  val client    = SlackRtmClient(btoken)
+  val muxactor  = system.actorOf(Props(new MuxActor(client, apiclient)), name = "mux")
+  val emoactor  = system.actorOf(Props(new EmoActor(client)), name = "emo")
 
   val selfId = client.state.self.id
 
@@ -61,17 +60,17 @@ object V2D2
     pprint.log(ls.size)
   }
 
-  val apiclient = SlackApiClient(ptoken)
-
   // relay don't delete
   client.onMessage { message =>
     muxactor ! Relay(message)
   }
 
-  def relaySlash(fields: Map[String,String]) = {
+  def relaySlash(
+    fields: Map[String, String]
+  ) = {
     val ocmd = SlashCommand(fields)
     ocmd.map { cmd =>
-     muxactor ! SlashRelay(
+      muxactor ! SlashRelay(
         Message(
           ts = "1234",
           channel = cmd.channel_id,
@@ -87,15 +86,15 @@ object V2D2
 
   lazy val routes: Route =
     concat(
-      pathPrefix("v1")  {
-        concat (
+      pathPrefix("v1") {
+        concat(
           get {
             path("ping") {
               complete(StatusCodes.OK)
             }
           },
           post {
-            concat (
+            concat(
               path("love") {
                 formFieldMap(relaySlash)
               },
@@ -108,106 +107,106 @@ object V2D2
       }
     )
 
-      // pathPrefix("guess") {
-      //   concat(
-      //     pathEnd {
-      //       concat(
-      //         post {
-      //           formFieldMap { fields =>
-      //             val ocmd = SlashCommand(fields)
-      //             ocmd.map { cmd =>
-      //               muxactor ! SlashRelay(
-      //                 Message(
-      //                   ts = "1234",
-      //                   channel = cmd.channel_id,
-      //                   user = cmd.user_id,
-      //                   text = cmd.strippedText,
-      //                   is_starred = None,
-      //                   thread_ts = None
-      //                 )
-      //               )
-      //             }
-      //             complete(StatusCodes.NoContent)
-      //           }
-      //         }
-      //       )
-      //     }
-      //   )
-      // },
-      // pathPrefix("who") {
-      //   concat(
-      //     pathEnd {
-      //       concat(
-      //         post {
-      //           formFieldMap { fields =>
-      //             val ocmd = SlashCommand(fields)
-      //             ocmd.map { cmd =>
-      //              muxactor ! SlashRelay(
-      //                 Message(
-      //                   ts = "1234",
-      //                   channel = cmd.channel_id,
-      //                   user = cmd.user_id,
-      //                   text = cmd.strippedText,
-      //                   is_starred = None,
-      //                   thread_ts = None
-      //                 )
-      //               )
-      //             }
-      //             complete(StatusCodes.NoContent)
-      //           }
-      //         }
-      //       )
-      //     }
-      //   )
-      // },
-      // pathPrefix("crush") {
-      //   concat(
-      //     pathEnd {
-      //       concat(
-      //         post {
-      //           formFieldMap { fields =>
-      //             val ocmd = SlashCommand(fields)
-      //             ocmd.map { cmd =>
-      //               muxactor ! SlashRelay(
-      //                 Message(
-      //                   ts = "1234",
-      //                   channel = cmd.channel_id,
-      //                   user = cmd.user_id,
-      //                   text = cmd.strippedText,
-      //                   is_starred = None,
-      //                   thread_ts = None
-      //                 )
-      //               )
-      //             }
-      //             complete(StatusCodes.NoContent)
-      //           }
-      //         }
-      //       )
-      //     }
-      //   )
-      // },
-      // pathPrefix("love") {
-      //   concat(
-      //     pathEnd {
-      //       concat(
-      //         post {
-      //           formFieldMap { fields =>
-      //             val ocmd = SlashCommand(fields)
-      //             ocmd.map { cmd =>
-      //               muxactor ! SlashRelay(
-      //                 Message(
-      //                   ts = "1234",
-      //                   channel = cmd.channel_id,
-      //                   user = cmd.user_id,
-      //                   text = cmd.strippedText,
-      //                   is_starred = None,
-      //                   thread_ts = None
-      //                 )
-      //               )
-      //             }
-      //             complete(StatusCodes.NoContent)
-      //           }
-      
+  // pathPrefix("guess") {
+  //   concat(
+  //     pathEnd {
+  //       concat(
+  //         post {
+  //           formFieldMap { fields =>
+  //             val ocmd = SlashCommand(fields)
+  //             ocmd.map { cmd =>
+  //               muxactor ! SlashRelay(
+  //                 Message(
+  //                   ts = "1234",
+  //                   channel = cmd.channel_id,
+  //                   user = cmd.user_id,
+  //                   text = cmd.strippedText,
+  //                   is_starred = None,
+  //                   thread_ts = None
+  //                 )
+  //               )
+  //             }
+  //             complete(StatusCodes.NoContent)
+  //           }
+  //         }
+  //       )
+  //     }
+  //   )
+  // },
+  // pathPrefix("who") {
+  //   concat(
+  //     pathEnd {
+  //       concat(
+  //         post {
+  //           formFieldMap { fields =>
+  //             val ocmd = SlashCommand(fields)
+  //             ocmd.map { cmd =>
+  //              muxactor ! SlashRelay(
+  //                 Message(
+  //                   ts = "1234",
+  //                   channel = cmd.channel_id,
+  //                   user = cmd.user_id,
+  //                   text = cmd.strippedText,
+  //                   is_starred = None,
+  //                   thread_ts = None
+  //                 )
+  //               )
+  //             }
+  //             complete(StatusCodes.NoContent)
+  //           }
+  //         }
+  //       )
+  //     }
+  //   )
+  // },
+  // pathPrefix("crush") {
+  //   concat(
+  //     pathEnd {
+  //       concat(
+  //         post {
+  //           formFieldMap { fields =>
+  //             val ocmd = SlashCommand(fields)
+  //             ocmd.map { cmd =>
+  //               muxactor ! SlashRelay(
+  //                 Message(
+  //                   ts = "1234",
+  //                   channel = cmd.channel_id,
+  //                   user = cmd.user_id,
+  //                   text = cmd.strippedText,
+  //                   is_starred = None,
+  //                   thread_ts = None
+  //                 )
+  //               )
+  //             }
+  //             complete(StatusCodes.NoContent)
+  //           }
+  //         }
+  //       )
+  //     }
+  //   )
+  // },
+  // pathPrefix("love") {
+  //   concat(
+  //     pathEnd {
+  //       concat(
+  //         post {
+  //           formFieldMap { fields =>
+  //             val ocmd = SlashCommand(fields)
+  //             ocmd.map { cmd =>
+  //               muxactor ! SlashRelay(
+  //                 Message(
+  //                   ts = "1234",
+  //                   channel = cmd.channel_id,
+  //                   user = cmd.user_id,
+  //                   text = cmd.strippedText,
+  //                   is_starred = None,
+  //                   thread_ts = None
+  //                 )
+  //               )
+  //             }
+  //             complete(StatusCodes.NoContent)
+  //           }
+
   client.onEvent {
     case reply: Reply =>
       emoactor ! reply

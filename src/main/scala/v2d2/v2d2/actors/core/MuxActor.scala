@@ -35,7 +35,8 @@ import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import slack.models.Attachment
 
 class MuxActor(
-  client: SlackRtmClient
+  client: SlackRtmClient,
+  apiclient: SlackApiClient
 ) extends Actor
   with EphemeralProtocol
   with ActorLogging {
@@ -44,7 +45,7 @@ class MuxActor(
   implicit val system = ActorSystem("slack")
 
   implicit val timeout      = Timeout(25.seconds)
-  implicit val materializer = ActorMaterializer()
+  // implicit val materializer = ActorMaterializer()
 
   context.actorOf(Props(classOf[Knocker]), name = "knocker")
   context.actorOf(Props(classOf[MagicAct]), name = "magiccards")
@@ -57,32 +58,35 @@ class MuxActor(
     case SimpleResponse(channel, txt) =>
       client.sendMessage(channel, txt)
 
+    // Unused
     case SimpleEphemResponse(channel, txt, user) =>
-      client.apiClient.client.postChatEphemeral(
+      apiclient.postChatEphemeral(
         channelId = channel,
         text = txt,
         user = user
       )
 
+    // case EphemResponse(rec, txt) =>
+
     case EphemResponse(rec, txt) =>
       // TODO fix this 
-      // if(txt.endsWith(".jpg")) {
-      //   client.apiClient.client.postChatEphemeral(
-      //     channelId = rec.channel,
-      //     text = txt,
-      //     attachments = Some(List(Attachment(
-      //       fallback = Some("fallback"),
-      //       image_url = Some(txt),
-      //     ))),
-      //     user = rec.user
-      //   )
-      // } else {
-        client.apiClient.client.postChatEphemeral(
+      if(txt.endsWith(".jpg")) {
+        apiclient.postChatEphemeral(
+          channelId = rec.channel,
+          text = txt,
+          attachments = Some(List(Attachment(
+            fallback = Some("fallback"),
+            image_url = Some(txt),
+          ))),
+          user = rec.user
+        )
+      } else {
+        apiclient.postChatEphemeral(
           channelId = rec.channel,
           text = txt,
           user = rec.user
         )
-      // }
+      }
 
     case Response(rec, txt) =>
       client.sendMessage(rec.channel, txt)
