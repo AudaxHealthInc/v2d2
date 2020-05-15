@@ -110,7 +110,7 @@ class WhoLoveAct extends Actor with ActorLogging with LoveListJPTL with LoveResu
                 .map { strs =>
                   context.parent ! EphemResponse(
                     love.msg,
-                    s"<@${love.user.id}> has sent :heart: to:\n" +
+                    s":heart: <@${love.user.id}> loves :heart:\n" +
                       strs
                         .collect {
                           case Some(u) => u
@@ -140,33 +140,48 @@ class WhoLoveAct extends Actor with ActorLogging with LoveListJPTL with LoveResu
           case Success(data) =>
             log.info(s"output ${data.received}")
             if (data.received.length == 0) {
-              context.parent ! Response(
-                love.msg,
-                s"@${love.senderNick} oh boy this is awkward... you don't have any love yet"
-              )
-            } else {
               context.parent ! EphemResponse(
                 love.msg,
-                s"<@${love.user.id}> has received love from:\n" +
-                  data.received
-                    .map(r => r.sender)
-                    .groupBy(i => i)
-                    .map {
-                      case (k, v) => k -> v.size
-                    }
-                    .map {
-                      case (k, v) =>
-                        val start = s"\t$k $v time"
+                s"<@${love.senderNick}> oh boy this is awkward... you don't have any love yet"
+              )
+            } else {
+              for {
+                userlist <- V2D2.users
+              } yield {
+                val emailmap = userlist.collect {
+                  case u: User if u.profile != None && u.profile.get.email != None =>
+                    u.profile.get.email.get -> u
+                }.toMap
+                val details = data.received
+                  .map(r => r.sender)
+                  .groupBy(i => i)
+                  .map {
+                    case (k, v) => k -> v.size
+                  }
+                  .flatMap {
+                    case (k, v) =>
+                      val user = emailmap.get(k) match {
+                        case Some(u) => Some(u)
+                        case None    => emailmap.get(k + "@rallyhealth.com")
+                      }
+                      user.map { u =>
+                        val start = s"\t${u.profile.get.real_name.getOrElse("missing")} $v time"
                         val end = if (v > 1) {
                           "s"
                         } else ""
                         start + end
-                    }
-                    .mkString("\n")
-              )
-              //   data.received.map {
-              //     res => s"\t${res.sender} - ${res.message}"
-              // }.mkString("\n"))
+                      }
+                    // }.map {
+                    //   case Some(str) => str
+                    //   case None => "
+                  }
+                  .mkString("\n")
+                context.parent ! EphemResponse(
+                  love.msg,
+                  s":heart: <@${love.user.id}> has received love from :heart:\n" +
+                    details
+                )
+              }
             }
           case Failure(t) =>
             context.parent ! Response(love.msg, s"An error has occured: " + t.getMessage)

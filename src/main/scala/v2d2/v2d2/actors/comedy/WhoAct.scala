@@ -106,14 +106,16 @@ class WhoAct extends Actor with ActorLogging with WhoJPTL {
       val str = data.map { u =>
             s"Name: ${u.name}"
           }.mkString("\n")
-      if(silent) EphemResponse(msg, str)
-      else Response(msg, str)
+      EphemResponse(msg, str)
+      // if(silent) EphemResponse(msg, str)
+      // else Response(msg, str)
     } else {
       val str = data.map { e =>
           e.avatar.getOrElse("https://who.werally.in/images/avatar/anon.svg")
         }.mkString("\n")
-      if(silent) EphemResponse(msg, str)
-      else Response(msg, str)
+      EphemResponse(msg, str)
+      // if(silent) EphemResponse(msg, str)
+      // else Response(msg, str)
     }
   }
 

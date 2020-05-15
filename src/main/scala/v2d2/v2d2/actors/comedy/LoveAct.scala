@@ -131,6 +131,7 @@ class LoveAct extends Actor with ActorLogging with LoveJsonProtocol {
                   log.info(s"get target ${user}")
                   List(user)
                 case _ =>
+                  log.info(s"can't find any users in the list")
                   context.parent ! EphemResponse(msg, s"Nice try silly human.")
                   Nil
               }

@@ -1,7 +1,7 @@
 import Dependencies._
 
 ThisBuild / scalaVersion := "2.12.8"
-ThisBuild / version := "0.1.1"
+ThisBuild / version := "1.0.13"
 ThisBuild / organization := "org.v2d2"
 ThisBuild / organizationName := "v2d2"
 traceLevel := 0

@@ -66,23 +66,23 @@ class MuxActor(
 
     case EphemResponse(rec, txt) =>
       // TODO fix this 
-      if(txt.endsWith(".jpg")) {
+      // if(txt.endsWith(".jpg")) {
+      //   client.apiClient.client.postChatEphemeral(
+      //     channelId = rec.channel,
+      //     text = txt,
+      //     attachments = Some(List(Attachment(
+      //       fallback = Some("fallback"),
+      //       image_url = Some(txt),
+      //     ))),
+      //     user = rec.user
+      //   )
+      // } else {
         client.apiClient.client.postChatEphemeral(
           channelId = rec.channel,
           text = txt,
-          attachments = Some(List(Attachment(
-            fallback = Some("fallback"),
-            image_url = Some(txt),
-          ))),
           user = rec.user
         )
-      } else {
-        client.apiClient.client.postChatEphemeral(
-          channelId = rec.channel,
-          text = txt,
-          user = rec.user
-        )
-      }
+      // }
 
     case Response(rec, txt) =>
       client.sendMessage(rec.channel, txt)
