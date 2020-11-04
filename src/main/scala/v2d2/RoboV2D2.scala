@@ -44,7 +44,7 @@ object V2D2 extends App with SlashCommandProtocol {
   val loveurl = uris.getString("v2d2.love.url")
 
   implicit val system       = ActorSystem("slack")
-  implicit val timeout      = Timeout(15.seconds)
+  implicit val timeout      = Timeout(30.seconds)
   implicit val ec           = system.dispatcher
 
   val apiclient = SlackApiClient(ptoken)
