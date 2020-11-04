@@ -4,6 +4,7 @@ import slack.models.Message
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
 import scala.util.control.NonFatal
+import v2d2.mtg.ICard
 
 trait Responder {
   def received: Message
@@ -31,6 +32,13 @@ case class Response(
   received: Message,
   deliver: String
 ) extends Responder
+
+case class CardResponse(
+  received: Message,
+  deliver: String,
+  cards:List[ICard]
+) extends Responder
+
 case class EphemResponse(
   received: Message,
   deliver: String

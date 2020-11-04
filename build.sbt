@@ -1,7 +1,7 @@
 import Dependencies._
 
-ThisBuild / scalaVersion := "2.12.8"
-ThisBuild / version := "1.0.16"
+ThisBuild / scalaVersion := "2.12.12"
+ThisBuild / version := "1.0.22"
 ThisBuild / organization := "org.v2d2"
 ThisBuild / organizationName := "v2d2"
 traceLevel := 0
@@ -13,10 +13,12 @@ resolvers += "scalaz-bintray".at("https://dl.bintray.com/scalaz/releases")
 resolvers +=
   "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/releases")
 
-// val akkaV      = "2.5.31"
-// val akkaHttpV  = "10.1.11"
-val akkaV      = "2.6.5"
-val akkaHttpV  = "10.1.12"
+// val akkaV      = "2.6.5"
+// val akkaHttpV  = "10.1.12"
+val akkaV      = "2.5.31"
+val akkaHttpV  = "10.1.11"
+// val akkaV      = "2.5.21"
+// val akkaHttpV  = "10.1.7"
 val scalaTestV = "3.0.5"
 val macWireV   = "2.3.3"
 
@@ -27,7 +29,6 @@ lazy val v2d2 = (project in file("."))
     name := "v2d2",
     // libraryDependencies += scalaTest % Test
     libraryDependencies ++= Seq(
-      "com.github.slack-scala-client" %% "slack-scala-client"   % "0.2.9",
       "joda-time"                     % "joda-time"             % "2.10.4",
       "org.mockito"                   % "mockito-core"          % "2.16.0" % "test",
       "com.softwaremill.macwire"      %% "macros"               % macWireV % "provided",
@@ -35,7 +36,7 @@ lazy val v2d2 = (project in file("."))
       "com.softwaremill.macwire"      %% "util"                 % macWireV,
       "com.softwaremill.macwire"      %% "proxy"                % macWireV,
       "com.typesafe.akka"             %% "akka-actor"           % akkaV,
-      // "com.typesafe.akka"             %% "akka-contrib"         % akkaV,
+      "com.typesafe.akka"             %% "akka-contrib"         % akkaV,
       "com.typesafe.akka"             %% "akka-stream"          % akkaV,
       "com.typesafe.akka"             %% "akka-testkit"         % akkaV,
       "com.typesafe.akka"             %% "akka-http"            % akkaHttpV,
@@ -64,7 +65,9 @@ dockerfile in docker := {
     .mkString(":") + ":" + jarTarget
   new Dockerfile {
     // Base image
-    from("openjdk:8-jre-slim")
+    from("openjdk:8u181-stretch")
+//     8u181-alpine
+// docker pull openjdk:8u181-alpine
     expose(8082)
     // Add all files on the classpath
     add(classpath.files, "/app/")

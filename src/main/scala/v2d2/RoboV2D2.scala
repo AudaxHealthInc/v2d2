@@ -46,7 +46,6 @@ object V2D2 extends App with SlashCommandProtocol {
   implicit val system       = ActorSystem("slack")
   implicit val timeout      = Timeout(15.seconds)
   implicit val ec           = system.dispatcher
-  implicit val materializer = ActorMaterializer()
 
   val apiclient = SlackApiClient(ptoken)
   val client    = SlackRtmClient(btoken)
@@ -218,6 +217,7 @@ object V2D2 extends App with SlashCommandProtocol {
       None
 
   }
+
   val bindingFuture = Http().bindAndHandle(routes, "0.0.0.0", 8082)
 
 }

@@ -13,6 +13,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 import akka.testkit.TestProbe
+import v2d2.protocols.CardResponse
 
 case class TCardSet(
   name: String,
@@ -150,17 +151,12 @@ class MagicSpec()
         def receive = {
           case x if sender == child =>
             x match {
-              case r: Response =>
-              // println("==========================")
-              // println(r)
-              // println("==========================")
-              /*
-              case n:HipNotif =>
-                // println("==========================")
-                // println(n)
-                // println("==========================")
-               */
-              case _ => assert(false)
+              case r: CardResponse =>
+                assert(r.cards.length == 1)
+                assert(r.cards.head.name == "Shivan Dragon")
+              case _ => 
+                pprint.log("fail")
+                assert(false)
             }
             proxy.ref.forward(x)
           case x => child.forward(x)
@@ -168,7 +164,7 @@ class MagicSpec()
       }))
 
       proxy.send(parent, tmsg)
-      proxy.receiveN(1, 8.seconds)
+      proxy.receiveN(1, 10.seconds)
     }
 
     "list best match for card with real data goblin" in {
@@ -188,48 +184,10 @@ class MagicSpec()
         def receive = {
           case x if sender == child =>
             x match {
-              case r: Response =>
-              // println("==========================")
-              // println(r)
-              // println("==========================")
-              /*
-              case n: HipNotif =>
-              // println("==========================")
-              // println(n)
-              // println("==========================")
-               */
-              case _ => assert(false)
-            }
-            proxy.ref.forward(x)
-          case x => child.forward(x)
-        }
-      }))
-
-      proxy.send(parent, tmsg)
-      proxy.receiveN(1, 8.seconds)
-    }
-
-    "list best match for card with real data jace" in {
-      val proxy = TestProbe()
-      val tmsg: Message = new Message(
-        "1568397986.001300",
-        "CML9J1N9G",
-        "UM3ETMMPE",
-        "card name jace",
-        None,
-        None
-      )
-
-      val cs = CardNameSearch(tmsg, "jace")
-      val parent = system.actorOf(Props(new Actor {
-        val child = context.actorOf(Props(classOf[MagicAct]), "child")
-        def receive = {
-          case x if sender == child =>
-            x match {
-              case r: Response =>
-                val pat =
-                  """:shrug: your best match was .* with \d?\d.\d\d% and score \d?\d.\d\d%""".r
+              case r: CardResponse =>
                 pprint.log(r)
+                assert(r.cards.length == 1)
+                assert(r.cards.head.name == "Goblin")
               case _ => assert(false)
             }
             proxy.ref.forward(x)
@@ -241,82 +199,101 @@ class MagicSpec()
       proxy.receiveN(1, 8.seconds)
     }
 
-    "list best match for card with real data black lotus" in {
-      val proxy = TestProbe()
-      val tmsg: Message = new Message(
-        "1568397986.001300",
-        "CML9J1N9G",
-        "UM3ETMMPE",
-        "card name is black lotus?",
-        None,
-        None
-      )
-
-      val cs = CardNameSearch(tmsg, "black lotus")
-      val parent = system.actorOf(Props(new Actor {
-        val child = context.actorOf(Props(classOf[MagicAct]), "child")
-        def receive = {
-          case x if sender == child =>
-            x match {
-              case r: Response =>
-              // println("==========================")
-              // println(r)
-              // println("==========================")
-              /*
-              case n: HipNotif =>
-              // println("==========================")
-              // println(n)
-              // println("==========================")
-               */
-              case _ => assert(false)
-            }
-            proxy.ref.forward(x)
-          case x => child.forward(x)
-        }
-      }))
-
-      proxy.send(parent, tmsg)
-      proxy.receiveN(1, 8.seconds)
-    }
-
-    "list best match for card with real data sun avatar" in {
-      val proxy = TestProbe()
-      val tmsg: Message = Message(
-        "1568397986.001300",
-        "CML9J1N9G",
-        "UM3ETMMPE",
-        "card name is sun's avatar?",
-        None,
-        None
-      )
-
-      val cs = CardNameSearch(tmsg, "sun's avatar")
-      val parent = system.actorOf(Props(new Actor {
-        val child = context.actorOf(Props(classOf[MagicAct]), "child")
-        def receive = {
-          case x if sender == child =>
-            x match {
-              case r: Response =>
-              // println("==========================")
-              // println(r)
-              // println("==========================")
-              /*
-              case n: HipNotif =>
-              // println("==========================")
-              // println(n)
-              // println("==========================")
-               */
-              case _ => assert(false)
-            }
-            proxy.ref.forward(x)
-          case x => child.forward(x)
-        }
-      }))
-
-      proxy.send(parent, tmsg)
-      proxy.receiveN(1, 8.seconds)
-    }
-
+    // "list best match for card with real data jace" in {
+    //   val proxy = TestProbe()
+    //   val tmsg: Message = new Message(
+    //     "1568397986.001300",
+    //     "CML9J1N9G",
+    //     "UM3ETMMPE",
+    //     "card name jace",
+    //     None,
+    //     None
+    //   )
+    //
+    //   val cs = CardNameSearch(tmsg, "jace")
+    //   val parent = system.actorOf(Props(new Actor {
+    //     val child = context.actorOf(Props(classOf[MagicAct]), "child")
+    //     def receive = {
+    //       case x if sender == child =>
+    //         x match {
+    //           case r: CardResponse =>
+    //             val pat =
+    //               """:shrug: your best match was .* with \d?\d.\d\d% and score \d?\d.\d\d%""".r
+    //             pprint.log(r)
+    //           case _ => assert(false)
+    //         }
+    //         proxy.ref.forward(x)
+    //       case x => child.forward(x)
+    //     }
+    //   }))
+    //
+    //   proxy.send(parent, tmsg)
+    //   proxy.receiveN(1, 8.seconds)
+    // }
+    //
+    // "list best match for card with real data black lotus" in {
+    //   val proxy = TestProbe()
+    //   val tmsg: Message = new Message(
+    //     "1568397986.001300",
+    //     "CML9J1N9G",
+    //     "UM3ETMMPE",
+    //     "card name is black lotus?",
+    //     None,
+    //     None
+    //   )
+    //
+    //   val cs = CardNameSearch(tmsg, "black lotus")
+    //   val parent = system.actorOf(Props(new Actor {
+    //     val child = context.actorOf(Props(classOf[MagicAct]), "child")
+    //     def receive = {
+    //       case x if sender == child =>
+    //         x match {
+    //           case r: CardResponse =>
+    //             assert(r.cards.length == 1)
+    //             assert(r.cards.head.name == "Black Lotus")
+    //           case _ => assert(false)
+    //         }
+    //         proxy.ref.forward(x)
+    //       case x => child.forward(x)
+    //     }
+    //   }))
+    //
+    //   proxy.send(parent, tmsg)
+    //   proxy.receiveN(1, 8.seconds)
+    // }
+    //
+    // "list best match for card with real data sun avatar" in {
+    //   val proxy = TestProbe()
+    //   val tmsg: Message = Message(
+    //     "1568397986.001300",
+    //     "CML9J1N9G",
+    //     "UM3ETMMPE",
+    //     "card name is sun's avatar?",
+    //     None,
+    //     None
+    //   )
+    //
+    //   val cs = CardNameSearch(tmsg, "sun's avatar")
+    //   val parent = system.actorOf(Props(new Actor {
+    //     val child = context.actorOf(Props(classOf[MagicAct]), "child")
+    //     def receive = {
+    //       case x if sender == child =>
+    //         x match {
+    //           case r: CardResponse =>
+    //             pprint.log(r)
+    //             assert(r.cards.length != 1)
+    //             assert(r.cards.head.name.contains("""Sun's Avatar"""))
+    //           case _ => assert(false)
+    //         }
+    //         proxy.ref.forward(x)
+    //       case x => child.forward(x)
+    //     }
+    //   }))
+    //
+    //   proxy.send(parent, tmsg)
+    //   proxy.receiveN(1, 8.seconds)
+    // }
+    //
     "list best match for card with real data validate no results stub" in {
       val proxy = TestProbe()
       val tmsg: Message = new Message(
@@ -332,12 +309,12 @@ class MagicSpec()
         def receive = {
           case x if sender == child =>
             x match {
-              case r: Response =>
+              case r: CardResponse =>
                 println("==========================")
                 val pat =
                   """:shrug: your best match was .* with \d?\d.\d\d% and score \d?\d.\d\d%""".r
                 pprint.log(r)
-                assert(pat.findFirstIn(r.deliver) != None)
+                assert(r.cards.length != 1)
                 // assert(r == Response(tmsg, "Try asking again with a longer string"))
                 println("==========================")
               /*
@@ -378,12 +355,12 @@ class MagicSpec()
         def receive = {
           case x if sender == child =>
             x match {
-              case r: Response =>
+              case r: CardResponse =>
                 val jw    = new JaroWinklerDistance()
                 val jcent = jw(src, res)
                 val p     = "%"
                 val pat =
-                  """:shrug: your best match was .* with \d?\d.\d\d% and score \d?\d.\d\d%""".r
+                  """/shrug your best match was .* with \d?\d.\d\d% and score \d?\d.\d\d%""".r
                 assert(pat.findFirstIn(r.deliver) != None)
               case _ => assert(false)
             }

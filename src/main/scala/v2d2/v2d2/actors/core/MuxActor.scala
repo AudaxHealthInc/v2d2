@@ -41,11 +41,9 @@ class MuxActor(
   with EphemeralProtocol
   with ActorLogging {
 
-  val selfId          = client.state.self.id
-  implicit val system = ActorSystem("slack")
-
-  implicit val timeout      = Timeout(25.seconds)
-  // implicit val materializer = ActorMaterializer()
+  val selfId           = client.state.self.id
+  implicit val system  = ActorSystem("slack")
+  implicit val timeout = Timeout(25.seconds)
 
   context.actorOf(Props(classOf[Knocker]), name = "knocker")
   context.actorOf(Props(classOf[MagicAct]), name = "magiccards")
@@ -69,15 +67,19 @@ class MuxActor(
     // case EphemResponse(rec, txt) =>
 
     case EphemResponse(rec, txt) =>
-      // TODO fix this 
-      if(txt.endsWith(".jpg")) {
+      // TODO fix this
+      if (txt.endsWith(".jpg")) {
         apiclient.postChatEphemeral(
           channelId = rec.channel,
           text = txt,
-          attachments = Some(List(Attachment(
-            fallback = Some("fallback"),
-            image_url = Some(txt),
-          ))),
+          attachments = Some(
+            List(
+              Attachment(
+                fallback = Some("fallback"),
+                image_url = Some(txt)
+              )
+            )
+          ),
           user = rec.user
         )
       } else {
@@ -87,6 +89,9 @@ class MuxActor(
           user = rec.user
         )
       }
+
+    case CardResponse(rec, txt, cards) =>
+      client.sendMessage(rec.channel, txt)
 
     case Response(rec, txt) =>
       client.sendMessage(rec.channel, txt)
@@ -106,6 +111,8 @@ class MuxActor(
     case Relay(msg) =>
       if (msg.text == "") {
         None
+      } else if (msg.text == "vito rocks") {
+        self ! EphemResponse(msg, "all hail the creator")
       } else
         context.children.foreach { child =>
           child ! msg

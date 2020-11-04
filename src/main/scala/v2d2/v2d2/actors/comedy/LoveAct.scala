@@ -23,7 +23,6 @@ class LoveAct extends Actor with ActorLogging with LoveJsonProtocol {
 
   implicit val timeout      = Timeout(25.seconds)
   implicit val system       = ActorSystem("slack")
-  implicit val materializer = ActorMaterializer()
 
   var guessing: Map[String, Queue[GuessLove]] = Map()
 

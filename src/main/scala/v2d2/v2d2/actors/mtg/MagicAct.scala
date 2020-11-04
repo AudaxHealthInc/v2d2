@@ -16,13 +16,13 @@ import akka.util.Timeout
 import org.apache.commons.lang3.StringUtils
 import slack.models.Message
 import scala.concurrent.ExecutionContext
-import v2d2.protocols.Response
+import v2d2.protocols.{CardResponse, Response}
 
 class MagicAct extends Actor with ActorLogging with CardSetProtocol {
   implicit val ec = ExecutionContext.global
   // import system.dispatcher
-  implicit val system       = ActorSystem()
-  implicit val timeout      = Timeout(25.seconds)
+  implicit val system  = ActorSystem()
+  implicit val timeout = Timeout(25.seconds)
 
   val stream: InputStream = getClass.getResourceAsStream("/allsets.json")
   val json                = scala.io.Source.fromInputStream(stream).mkString
@@ -87,7 +87,15 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
           }
           .head
         // make the list unique by name
-        minScores._2.map(_._2).groupBy { c => c.name }.map { t => t._2.head }.toList
+        minScores._2
+          .map(_._2)
+          .groupBy { c =>
+            c.name
+          }
+          .map { t =>
+            t._2.head
+          }
+          .toList
       case c =>
         Tuple2(0, c)._2.groupBy(c => c.name).map(t => t._2.head).toList
     }
@@ -127,11 +135,12 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
             context.parent ! Response(cs.msg, "Try asking again with a longer string")
           } else if (((tlen == 3 || tlen == 4) && score > 1) ||
                      ((tlen == 5 || tlen == 6) && score > 2) || pcent < 0.7) {
-            context.parent ! Response(
+            context.parent ! CardResponse(
               cs.msg,
-              f""":shrug: your best match was
+              f"""/shrug your best match was
                  |${results.head.name} with ${pcent * 100}%1.2f$p
-                 |and score ${jcent * 100}%1.2f$p""".stripMargin.replaceAll("\n", " ")
+                 |and score ${jcent * 100}%1.2f$p""".stripMargin.replaceAll("\n", " "),
+              results
             )
           } else {
 
@@ -141,20 +150,21 @@ class MagicAct extends Actor with ActorLogging with CardSetProtocol {
                 (u -> c)
             }
 
-            // imgs map { t => pprint.pprintln(t._1) }
             if (imgs.length > 16) {
-              context.parent ! Response(
+              context.parent ! CardResponse(
                 cs.msg,
                 f"""Found too many matches (${imgs.length}). The best match was
                    |${results.head.name} with ${pcent * 100}%1.2f$p
-                   |and score ${jcent * 100}%1.2f$p""".stripMargin.replaceAll("\n", " ")
+                   |and score ${jcent * 100}%1.2f$p""".stripMargin.replaceAll("\n", " "),
+                results
               )
             } else {
-              context.parent ! Response(
+              context.parent ! CardResponse(
                 cs.msg,
                 f"""The best match was ${results.head.name} with ${pcent * 100}%1.2f$p
                    |and score ${jcent * 100}%1.2f$p
-                   |${imgs.head._1}""".stripMargin.replaceAll("\n", " ")
+                   |${imgs.head._1}""".stripMargin.replaceAll("\n", " "),
+                results
               )
             }
           }

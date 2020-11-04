@@ -21,7 +21,6 @@ import slack.models.User
 class WhoLoveAct extends Actor with ActorLogging with LoveListJPTL with LoveResultJPTL {
 
   implicit val system       = ActorSystem("slack")
-  implicit val materializer = ActorMaterializer()
   implicit val timeout      = Timeout(25.seconds)
 
   def formatOutput(

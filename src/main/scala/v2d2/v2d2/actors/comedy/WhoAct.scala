@@ -21,12 +21,13 @@ import slack.models.User
 import slack.rtm.SlackRtmClient
 import v2d2.protocols.SlashRelay
 import v2d2.protocols.EphemResponse
+import akka.http.scaladsl.model.headers.`Content-Type`
+import akka.util.ByteString
 
 class WhoAct extends Actor with ActorLogging with WhoJPTL {
 
-  implicit val system       = ActorSystem("slack")
-  implicit val materializer = ActorMaterializer()
-  implicit val timeout      = Timeout(25.seconds)
+  implicit val system  = ActorSystem("slack")
+  implicit val timeout = Timeout(25.seconds)
 
   def best(
     s: String,
@@ -103,16 +104,20 @@ class WhoAct extends Actor with ActorLogging with WhoJPTL {
     silent: Boolean
   ): v2d2.protocols.Responder = {
     if (data.length > 4) {
-      val str = data.map { u =>
-            s"Name: ${u.name}"
-          }.mkString("\n")
+      val str = data
+        .map { u =>
+          s"Name: ${u.name}"
+        }
+        .mkString("\n")
       EphemResponse(msg, str)
       // if(silent) EphemResponse(msg, str)
       // else Response(msg, str)
     } else {
-      val str = data.map { e =>
+      val str = data
+        .map { e =>
           e.avatar.getOrElse("https://who.werally.in/images/avatar/anon.svg")
-        }.mkString("\n")
+        }
+        .mkString("\n")
       EphemResponse(msg, str)
       // if(silent) EphemResponse(msg, str)
       // else Response(msg, str)
@@ -131,9 +136,13 @@ class WhoAct extends Actor with ActorLogging with WhoJPTL {
       }).replaceAll("@.*$", "")
       val uri = s"${V2D2.whourl}/people/${target}"
       log.info(s"request love for ${uri}")
+      pprint.log("get who user")
       val content = for {
         response <- Http().singleRequest(
-          HttpRequest(method = HttpMethods.GET, uri = s"${V2D2.whourl}/people/${target}")
+          HttpRequest(
+            method = HttpMethods.GET,
+            uri = s"${V2D2.whourl}/people/${target}"
+          ).withHeaders(List(`Content-Type`(ContentTypes.`application/json`)))
         )
         entity <- Unmarshal(response.entity).to[WhoUser]
       } yield entity
@@ -145,9 +154,18 @@ class WhoAct extends Actor with ActorLogging with WhoJPTL {
       }
 
     case who: GetWhoAll =>
+      val request = HttpRequest(
+        method = HttpMethods.GET, 
+        uri = s"${V2D2.whourl}/people",
+        entity = HttpEntity(ContentTypes.`application/json`, ByteString.empty)
+      )
       val content = for {
-        response <- Http().singleRequest(
-          HttpRequest(method = HttpMethods.GET, uri = s"${V2D2.whourl}/people")
+        response <- Http().singleRequest(request
+          // HttpRequest(method = HttpMethods.GET, uri = s"${V2D2.whourl}/people").withEntity(
+          //   ContentTypes.`application/json`, ""
+          //   )
+            // .withHeaders(List(`Content-Type`(ContentTypes.`application/json`)))
+            // HttpRequest.entity.contentType
         )
         entity <- Unmarshal(response.entity).to[Seq[WhoUser]]
       } yield entity
@@ -166,7 +184,7 @@ class WhoAct extends Actor with ActorLogging with WhoJPTL {
               email -> u
             }.toMap
             context.parent ! genResponse(
-              who.msg, 
+              who.msg,
               lookup(who.search, data, nmap, emap)._2.toList,
               who.silent
             )

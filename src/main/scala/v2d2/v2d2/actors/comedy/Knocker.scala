@@ -11,7 +11,6 @@ import v2d2.V2D2
 
 class Knocker extends Actor with ActorLogging {
   implicit val system       = ActorSystem()
-  implicit val materializer = ActorMaterializer()
   implicit val timeout      = Timeout(25.seconds)
 
   val answers = Answers.answers
