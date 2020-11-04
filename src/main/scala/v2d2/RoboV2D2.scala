@@ -47,9 +47,13 @@ object V2D2 extends App with SlashCommandProtocol {
   implicit val timeout      = Timeout(30.seconds)
   implicit val ec           = system.dispatcher
 
+  pprint.log("STARTING UP")
   val apiclient = SlackApiClient(ptoken)
-  val client    = SlackRtmClient(btoken)
+  pprint.log("CLIENT UP")
+  val client    = SlackRtmClient(token = btoken, duration = 25.seconds)
+  pprint.log("RTM CLIENT UP")
   val muxactor  = system.actorOf(Props(new MuxActor(client, apiclient)), name = "mux")
+  pprint.log("MUX ACTOR UP")
   val emoactor  = system.actorOf(Props(new EmoActor(client)), name = "emo")
 
   val selfId = client.state.self.id

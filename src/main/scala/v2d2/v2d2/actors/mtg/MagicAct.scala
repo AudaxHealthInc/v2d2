@@ -17,15 +17,21 @@ import org.apache.commons.lang3.StringUtils
 import slack.models.Message
 import scala.concurrent.ExecutionContext
 import v2d2.protocols.{CardResponse, Response}
+import akka.http.scaladsl.model.HttpResponse
 
 class MagicAct extends Actor with ActorLogging with CardSetProtocol {
   implicit val ec = ExecutionContext.global
   // import system.dispatcher
   implicit val system  = ActorSystem()
-  implicit val timeout = Timeout(25.seconds)
+  implicit val timeout = Timeout(30.seconds)
+
 
   val stream: InputStream = getClass.getResourceAsStream("/allsets.json")
   val json                = scala.io.Source.fromInputStream(stream).mkString
+  // val stream: InputStream = getClass.getResourceAsStream("/allsets.json")
+  // val response = HttpResponse(entity = HttpEntity(ContentTypes.`application/json`, stream))
+  // val sjson               = scala.io.Source.fromInputStream(stream)
+  // val json                = scala.io.Source.fromInputStream(stream).mkString
 
   def scores(
     str: String,
